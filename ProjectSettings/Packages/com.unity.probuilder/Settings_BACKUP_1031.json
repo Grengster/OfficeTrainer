@@ -174,7 +174,11 @@
             {
                 "type": "UnityEngine.Vector3, UnityEngine.CoreModule, Version=0.0.0.0, Culture=neutral, PublicKeyToken=null",
                 "key": "ShapeBuilder.LastSize",
+<<<<<<< HEAD
+                "value": "{\"m_Value\":{\"x\":0.9325046539306641,\"y\":1.5018181800842286,\"z\":-1.0815972089767457}}"
+=======
                 "value": "{\"m_Value\":{\"x\":0.5633693337440491,\"y\":0.44416478276252749,\"z\":-0.061281442642211917}}"
+>>>>>>> a24ed71dd7655ce90e06d9a08c64fc7bdc742839
             },
             {
                 "type": "UnityEngine.Vector3, UnityEngine.CoreModule, Version=0.0.0.0, Culture=neutral, PublicKeyToken=null",
@@ -223,7 +227,7 @@
             },
             {
                 "type": "UnityEngine.ProBuilder.Shapes.Shape, Unity.ProBuilder, Version=0.0.0.0, Culture=neutral, PublicKeyToken=null",
-                "key": "ShapeBuilder.Cylinder",
+                "key": "ShapeBuilder.Arch",
                 "value": "{}"
             },
             {
