@@ -28,7 +28,7 @@ public class FireManager : MonoBehaviour
 
     void Update()
     {
-        if (firesExtinguished && Input.GetKeyDown(KeyCode.Space)){
+        if (firesExtinguished && (OVRInput.GetDown(OVRInput.RawButton.A) || Input.GetKeyDown(KeyCode.Q))){
             SpawnFires();
         }
     }
@@ -66,12 +66,16 @@ public class FireManager : MonoBehaviour
     private void OnFireExtinguished(int GameObjectId)
     {
         Debug.Log($"Fire {GameObjectId} extinguished!");
-        Debug.Log($"{this.spawnedFires.Serialize()}");
+        //Debug.Log($"{this.spawnedFires.Serialize()}");
         if (spawnedFires.TryGetValue(GameObjectId, out GameObject go) && go.TryGetComponent(out Fire fire)){
-            Debug.LogWarning("FIRE");
+            //Debug.LogWarning("FIRE");
             spawnedFires.Remove(GameObjectId);
             fire.fireExtinguishedEvent.RemoveAllListeners();
-            go.DestroySafely();
+            for (int i = go.transform.childCount - 1; i >= 0; i--)
+            {
+                Object.Destroy(go.transform.GetChild(i).gameObject);
+            };
+            Object.Destroy(go);
         }
 
         if(spawnedFires.Count <= 0)
