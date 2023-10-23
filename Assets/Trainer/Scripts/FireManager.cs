@@ -1,8 +1,11 @@
 using Meta.WitAi;
 using System.Collections.Generic;
+using System.Net;
+using TMPro;
 using Unity.VisualScripting;
 using UnityEngine;
 using UnityEngine.Events;
+using UnityEngine.SceneManagement;
 
 public class FireManager : MonoBehaviour
 {
@@ -10,12 +13,24 @@ public class FireManager : MonoBehaviour
     [SerializeField] private GameObject firePrefab;
     [SerializeField] private int maxFires = 5;
     [SerializeField, Min(0.1f)] private float spawnRadius = 2;
-
+    public int totalFires = 0;
     Dictionary<int, GameObject> spawnedFires = new();
 
     public UnityEvent firesExtinguishedEvent = new UnityEvent();
 
     private bool firesExtinguished = true;
+
+    public FireAlarmController alarmController = null;
+    public WinScreenManager winScreenManager = null;
+
+    private float timeSinceGameStart, timeToStartGame;
+
+    public float initialFireDelay = 3f; 
+    public float spawnInterval = 10f;
+
+    private float timeSinceLastSpawn;
+    private bool initialSpawnComplete = false;
+    public bool gameIsStarting = false;
 
     void Start()
     {
@@ -24,19 +39,56 @@ public class FireManager : MonoBehaviour
         if( firePrefab == null)
             Debug.LogError($"Prefab must be set for {nameof(firePrefab)}");
 
+        timeSinceLastSpawn = initialFireDelay;
+        timeToStartGame = Random.Range(5.0f, 10.0f);
+        timeSinceGameStart = 0;
+
     }
 
     void Update()
     {
-        if (firesExtinguished && (OVRInput.GetDown(OVRInput.RawButton.A) || Input.GetKeyDown(KeyCode.Q))){
-            SpawnFires();
+        if (OVRInput.GetDown(OVRInput.RawButton.Y) || Input.GetKeyDown(KeyCode.T))
+        {
+            timeSinceGameStart = 0;
+            gameIsStarting = true;
         }
+        timeSinceGameStart += Time.deltaTime;
+
+        if (!initialSpawnComplete && (timeSinceGameStart >= timeToStartGame) && gameIsStarting)
+        {
+            if (timeSinceLastSpawn >= initialFireDelay)
+            {
+                timeSinceGameStart += Time.deltaTime;
+                SpawnFires();
+                initialSpawnComplete = true;
+                gameIsStarting = false;
+            }
+        }
+        else
+        {
+            if (!firesExtinguished && (timeSinceLastSpawn >= spawnInterval))
+            {
+                timeSinceGameStart += Time.deltaTime;
+                SpawnFires();
+            }
+        }
+        if(initialSpawnComplete)
+            timeSinceLastSpawn += Time.deltaTime;
     }
 
     private void SpawnFires()
     {
+        totalFires++;
+        if (totalFires > 10)
+        {
+            firesExtinguished = true;
+            firesExtinguishedEvent.Invoke();
+            alarmController.StopAlarm();
+            winScreenManager.ShowLoseScreen();
+            return;
+        }
         var spawnpoint = fireSpawnPoints[Random.Range(0,fireSpawnPoints.Length)];
-        var amountOfFires = Random.Range(1, maxFires);
+        var amountOfFires = 1;
 
         for (int i = 0; i < amountOfFires; i++)
         {
@@ -50,7 +102,11 @@ public class FireManager : MonoBehaviour
             
             spawnedFires.Add(go.GetInstanceID(), go);
         }
+        if(firesExtinguished == true)
+            alarmController.StartAlarm();
+        spawnInterval = Random.Range(9.0f, 12.0f);
         firesExtinguished = false;
+        timeSinceLastSpawn = 0; 
     }
 
     Vector3 RandomCircle(Vector3 center, float radius)
@@ -83,6 +139,9 @@ public class FireManager : MonoBehaviour
             Debug.LogError("FIRES GONE");
             firesExtinguished = true;
             firesExtinguishedEvent.Invoke();
+            alarmController.StopAlarm();
+            winScreenManager.ShowWinScreen();
+            winScreenManager.winScreen.GetComponentInChildren<TextMeshProUGUI>().text += "\nYour time was: <b>" + timeSinceGameStart.ToString("0.00") + "sec</b>\n\nPress START to restart.";
         }
     }
 }

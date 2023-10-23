@@ -10,6 +10,10 @@ public class FireExtinguisher : MonoBehaviour
     [SerializeField] private ParticleSystem ps = null;
     [SerializeField] private float extinguisherRaycastRange = 3f;
     public List<ParticleCollisionEvent> collisionEvents = new();
+    public Outline outlineScript = null;
+    public WaypointArrow arrowScript = null;
+    public bool grabbedTutorial = true;
+    public GameObject grabTutorial = null;
 
 
     public float GetAmountExtinguishedPerParticle()
@@ -29,6 +33,18 @@ public class FireExtinguisher : MonoBehaviour
     {
         if (grabbable.isGrabbed || Input.GetKeyDown(KeyCode.E))
         {
+            outlineScript.enabled = false;
+            arrowScript.ToggleArrow(false);
+            if (grabbedTutorial)
+            {
+                grabTutorial.SetActive(true);
+                if (OVRInput.Get(OVRInput.RawButton.LIndexTrigger) || OVRInput.Get(OVRInput.RawButton.RIndexTrigger))
+                {
+                    grabTutorial.SetActive(false);
+                    grabbedTutorial = false;
+                }
+            }
+            
             if (Input.GetKeyDown(KeyCode.E) || grabbable.grabbedBy.gameObject.GetComponent<OVRGrabber>().m_controller == OVRInput.Controller.LTouch && OVRInput.Get(OVRInput.RawButton.LIndexTrigger) )
             {
                 ToggleFireExtinguisher(true);
@@ -41,8 +57,10 @@ public class FireExtinguisher : MonoBehaviour
                 ToggleFireExtinguisher(false);
         }
         else
+        {
+            outlineScript.enabled = true;
             ToggleFireExtinguisher(false);
-
+        }
     }
 
     void ToggleFireExtinguisher(bool isActive)
