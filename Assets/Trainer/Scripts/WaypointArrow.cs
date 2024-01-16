@@ -11,7 +11,7 @@ public class WaypointArrow : MonoBehaviour
 
     private void Start()
     {
-        if (centerEye == null)
+        /*if (centerEye == null)
         {
             // If the CenterEye reference is not set, try to find it
             centerEye = GameObject.Find("CenterEyeAnchor").transform;
@@ -25,13 +25,13 @@ public class WaypointArrow : MonoBehaviour
         else
         {
             Debug.LogError("CenterEye not found. Ensure the reference is set or that the CenterEyeAnchor exists in the scene.");
-        }
+        }*/
     }
 
     private void Update()
     {
         
-
+/*
         FindClosestObject();
 
         if (closestObject)
@@ -47,7 +47,7 @@ public class WaypointArrow : MonoBehaviour
 
             // Position the arrow in front of the player's head using CenterEyeAnchor
             transform.position = centerEye.position + centerEye.forward * 1.0f;
-        }
+        }*/
     }
 
     public void ToggleArrow(bool state)
@@ -55,9 +55,19 @@ public class WaypointArrow : MonoBehaviour
         gameObject.SetActive(state);
     }
 
+    public void PointTo(Vector3 targetPosition)
+    {
+        Vector3 directionToTarget = targetPosition - transform.position;
+        directionToTarget.y = 0; // Optionally, you can zero out the y component if you want the arrow to only rotate horizontally.
+
+        Quaternion targetRotation = Quaternion.LookRotation(directionToTarget);
+        transform.rotation = Quaternion.Slerp(transform.rotation, targetRotation, Time.deltaTime * 1.0f);
+
+        // If you have an arrow object that's a child of this GameObject, you might need to adjust its local rotation instead.
+    }
+
     private void FindClosestObject()
     {
-
         closestObject = null;
         float closestDistance = float.MaxValue;
 
@@ -68,6 +78,7 @@ public class WaypointArrow : MonoBehaviour
             {
                 closestDistance = distance;
                 closestObject = collider.gameObject;
+                Debug.Log($"DISTANCE: {closestDistance}");
             }
         }
     }

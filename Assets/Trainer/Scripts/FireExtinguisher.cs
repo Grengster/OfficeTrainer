@@ -10,7 +10,6 @@ public class FireExtinguisher : MonoBehaviour
     [SerializeField] private ParticleSystem ps = null;
     [SerializeField] private float extinguisherRaycastRange = 3f;
     public List<ParticleCollisionEvent> collisionEvents = new();
-    public Outline outlineScript = null;
     public WaypointArrow arrowScript = null;
     public bool grabbedTutorial = true;
     public GameObject grabTutorial = null;
@@ -33,7 +32,6 @@ public class FireExtinguisher : MonoBehaviour
     {
         if (grabbable.isGrabbed || Input.GetKeyDown(KeyCode.E))
         {
-            outlineScript.enabled = false;
             arrowScript.ToggleArrow(false);
             if (grabbedTutorial)
             {
@@ -58,7 +56,6 @@ public class FireExtinguisher : MonoBehaviour
         }
         else
         {
-            outlineScript.enabled = true;
             ToggleFireExtinguisher(false);
         }
     }

@@ -98,8 +98,21 @@ public class Outline : MonoBehaviour {
     // Apply material properties immediately
     needsUpdate = true;
   }
+    [SerializeField]
+    public void ToggleOutline(bool enabled)
+    {
+        if (enabled)
+        {
+            OnEnable();
+        }
+        else
+        {
+            OnDisable();
+        }
+    }
 
-  void OnEnable() {
+
+    void OnEnable() {
     foreach (var renderer in renderers) {
 
       // Append outline shaders
