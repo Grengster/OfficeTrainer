@@ -65,31 +65,29 @@ public class GameManagement : MonoBehaviour
                 UpdateOutlines();
             }
         }
-        if (readyForNextStep && currentTarget == null)
-        {
-            currentTarget = FindNearestHighlightedObject();
-            if (currentTarget != null)
-            {
-                arrowScript.PointTo(currentTarget.transform.position);
-            }
-        }
+        
+        currentTarget = FindNearestHighlightedObject();
 
         // Actively track the distance to the closest object
         if (currentTarget != null)
-        {
-            float distanceToTarget = Vector3.Distance(currentTarget.transform.position, playerController.transform.position);
-            Debug.Log($"Distance to target: {distanceToTarget}"); // For debugging
+    {
+        float distanceToTarget = Vector3.Distance(currentTarget.transform.position, playerController.transform.position);
+        //Debug.Log($"Distance to target: {distanceToTarget}");
 
-            if (distanceToTarget < 3.0f)
-            {
-                Debug.Log("Player is within 3.0f units of the target.");
-                tutorialScreen.SetActive(true);
-                gamePaused = true;
-                currentTarget = null;
-                readyForNextStep = false;
-                NextTutorialItem();
-            }
+        if (distanceToTarget >= 3.0f)  // Check if the player is not yet close enough
+        {
+            arrowScript.PointTo(currentTarget.transform.position);  // Continuously update arrow direction
         }
+        else
+        {
+            Debug.Log("Player is within 3.0f units of the target.");
+            tutorialScreen.SetActive(true);
+            gamePaused = true;
+            currentTarget = null;
+            readyForNextStep = false;
+            NextTutorialItem();
+        }
+    }
     }
 
     public void StartGame()
@@ -120,16 +118,16 @@ public class GameManagement : MonoBehaviour
     {
         Debug.Log("GameManagement FindNearestHighlightedObject: Searching for nearest object.");
         GameObject nearestObj = null;
-        float minDistance = float.MaxValue;
-
+        GameObject tMin = null;
+        float minDist = Mathf.Infinity;
         foreach (var obj in tutorialSteps[currentTutorialIndex].objects)
         {
-            float distance = Vector3.Distance(obj.transform.position, playerController.transform.position);
-            if (distance < minDistance)
+
+            float dist = Vector3.Distance(obj.transform.position, playerController.transform.position);
+            if (dist < minDist)
             {
-                minDistance = distance;
-                nearestObj = obj;
-                Debug.Log($"Distance: {minDistance}");
+                tMin = obj;
+                minDist = dist;
             }
         }
 
@@ -142,7 +140,7 @@ public class GameManagement : MonoBehaviour
             Debug.Log("GameManagement FindNearestHighlightedObject: No object found.");
         }
 
-        return nearestObj;
+        return tMin;
     }
 
     private void DisplayCurrentTutorialStep()
