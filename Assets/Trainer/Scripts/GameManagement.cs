@@ -69,8 +69,8 @@ public class GameManagement : MonoBehaviour
         currentTarget = FindNearestHighlightedObject();
 
         // Actively track the distance to the closest object
-        if (currentTarget != null)
-    {
+        if (currentTarget != null && !gamePaused)
+        {
         float distanceToTarget = Vector3.Distance(currentTarget.transform.position, playerController.transform.position);
         //Debug.Log($"Distance to target: {distanceToTarget}");
 
