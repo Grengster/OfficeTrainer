@@ -23,4 +23,9 @@ public class WaypointArrow : MonoBehaviour
 
     }
 
+    public void DisableArrow()
+    {
+        this.arrow.SetActive(false);
+    }
+
 }

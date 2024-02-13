@@ -71,23 +71,31 @@ public class GameManagement : MonoBehaviour
         // Actively track the distance to the closest object
         if (currentTarget != null && !gamePaused)
         {
-        float distanceToTarget = Vector3.Distance(currentTarget.transform.position, playerController.transform.position);
-        //Debug.Log($"Distance to target: {distanceToTarget}");
+            float distanceToTarget = Vector3.Distance(currentTarget.transform.position, playerController.transform.position);
+            //Debug.Log($"Distance to target: {distanceToTarget}");
 
-        if (distanceToTarget >= 3.0f)  // Check if the player is not yet close enough
-        {
-            arrowScript.PointTo(currentTarget.transform.position);  // Continuously update arrow direction
+            if (distanceToTarget >= 3.0f)  // Check if the player is not yet close enough
+            {
+                arrowScript.PointTo(currentTarget.transform.position);  // Continuously update arrow direction
+            }
+            else
+            {
+                Debug.Log("Player is within 3.0f units of the target.");
+                tutorialScreen.SetActive(true);
+                arrowScript.DisableArrow();
+                gamePaused = true;
+                currentTarget = null;
+                readyForNextStep = false;
+                NextTutorialItem();
+            }
         }
-        else
+        /*else if (currentTarget == null && !gamePaused)
         {
-            Debug.Log("Player is within 3.0f units of the target.");
             tutorialScreen.SetActive(true);
+            arrowScript.DisableArrow();
             gamePaused = true;
             currentTarget = null;
-            readyForNextStep = false;
-            NextTutorialItem();
-        }
-    }
+        }*/
     }
 
     public void StartGame()
@@ -120,6 +128,8 @@ public class GameManagement : MonoBehaviour
         GameObject nearestObj = null;
         GameObject tMin = null;
         float minDist = Mathf.Infinity;
+        if(tutorialSteps[currentTutorialIndex] == null)
+            return null;
         foreach (var obj in tutorialSteps[currentTutorialIndex].objects)
         {
 
@@ -165,14 +175,15 @@ public class GameManagement : MonoBehaviour
         for (int i = 0; i < tutorialSteps.Count; i++)
         {
             bool shouldEnable = i == currentTutorialIndex;
-            foreach (var obj in tutorialSteps[i].objects)
-            {
-                Outline outline = obj.GetComponent<Outline>();
-                if (outline != null)
+            if(tutorialSteps[i] != null)
+                foreach (var obj in tutorialSteps[i].objects)
                 {
-                    outline.enabled = shouldEnable;
+                    Outline outline = obj.GetComponent<Outline>();
+                    if (outline != null)
+                    {
+                        outline.enabled = shouldEnable;
+                    }
                 }
-            }
         }
     }
 
