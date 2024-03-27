@@ -6,8 +6,11 @@ EditorBuildSettings:
   serializedVersion: 2
   m_Scenes:
   - enabled: 1
-    path: Assets/Trainer/Scenes/TrainerTestMap.unity
-    guid: 9ce64831b3575334c8b3ed85790a7ad0
+    path: Assets/Trainer/Scenes/MainMenu.unity
+    guid: 76ffd422acb764d41b46817a39ad79f8
+  - enabled: 1
+    path: Assets/Trainer/Scenes/TrainerTestMap 1.unity
+    guid: 1a7ae410c688ed342ad56247b6896509
   m_configObjects:
     Unity.XR.Oculus.Settings: {fileID: 11400000, guid: bfa1182bd221b4ca89619141f66f1260,
       type: 2}

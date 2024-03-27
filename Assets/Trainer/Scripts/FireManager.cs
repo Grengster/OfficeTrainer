@@ -104,7 +104,7 @@ public class FireManager : MonoBehaviour
         }
         if(firesExtinguished == true)
             alarmController.StartAlarm();
-        spawnInterval = Random.Range(9.0f, 12.0f);
+        spawnInterval = Random.Range(15.0f, 30.0f);
         firesExtinguished = false;
         timeSinceLastSpawn = 0; 
     }

@@ -28,6 +28,7 @@ public class GameManagement : MonoBehaviour
         public List<GameObject> objects = new List<GameObject>();
         public string message;
         public List<Outline> outlines = new List<Outline>();
+        public bool[] visitedObjects; // Keeps track of visited objects
     }
 
     public List<TutorialStep> tutorialSteps = new List<TutorialStep>();
@@ -52,7 +53,7 @@ public class GameManagement : MonoBehaviour
             SceneManager.LoadScene(currentScene.buildIndex);
         }
 
-        if (gamePaused && Input.GetKeyDown(KeyCode.KeypadEnter))
+        if (gamePaused && (Input.GetKeyDown(KeyCode.KeypadEnter) || OVRInput.GetDown(OVRInput.RawButton.A)))
         {
             if (!readyForNextStep)
             {
@@ -65,7 +66,7 @@ public class GameManagement : MonoBehaviour
                 UpdateOutlines();
             }
         }
-        
+
         currentTarget = FindNearestHighlightedObject();
 
         // Actively track the distance to the closest object
@@ -74,28 +75,31 @@ public class GameManagement : MonoBehaviour
             float distanceToTarget = Vector3.Distance(currentTarget.transform.position, playerController.transform.position);
             //Debug.Log($"Distance to target: {distanceToTarget}");
 
-            if (distanceToTarget >= 3.0f)  // Check if the player is not yet close enough
+            if (distanceToTarget < 3.0f)  // Check if the player is within 3.0f units of the target
             {
-                arrowScript.PointTo(currentTarget.transform.position);  // Continuously update arrow direction
+                Debug.Log("Player is within 3.0f units of the target.");
+
+                // Check if all objects in the current step are visited
+                if (AllObjectsVisited())
+                {
+                    tutorialScreen.SetActive(true);
+                    arrowScript.DisableArrow();
+                    gamePaused = true;
+                    currentTarget = null;
+                    readyForNextStep = false;
+                    NextTutorialItem();
+                }
+                else
+                {
+                    DisableNearestOutline();
+                    Debug.Log("Please visit all objects in the current step.");
+                }
             }
             else
             {
-                Debug.Log("Player is within 3.0f units of the target.");
-                tutorialScreen.SetActive(true);
-                arrowScript.DisableArrow();
-                gamePaused = true;
-                currentTarget = null;
-                readyForNextStep = false;
-                NextTutorialItem();
+                arrowScript.PointTo(currentTarget.transform.position);  // Continuously update arrow direction
             }
         }
-        /*else if (currentTarget == null && !gamePaused)
-        {
-            tutorialScreen.SetActive(true);
-            arrowScript.DisableArrow();
-            gamePaused = true;
-            currentTarget = null;
-        }*/
     }
 
     public void StartGame()
@@ -110,6 +114,7 @@ public class GameManagement : MonoBehaviour
 
         if (currentTutorialIndex < tutorialSteps.Count)
         {
+            InitializeVisitedObjects(); // Initialize visited objects for the new step
             DisplayCurrentTutorialStep(); // Display the next tutorial step
         }
         else
@@ -122,13 +127,35 @@ public class GameManagement : MonoBehaviour
         UpdateOutlines(); // Update the outlines for all objects
     }
 
+    private void DisableNearestOutline()
+    {
+        GameObject nearestObject = FindNearestHighlightedObject();
+        if (nearestObject != null)
+        {
+            Outline outline = nearestObject.GetComponent<Outline>();
+            if (outline != null)
+            {
+                outline.enabled = false;
+
+                // Set visited to true for the nearest object
+                int objectIndex = tutorialSteps[currentTutorialIndex].objects.IndexOf(nearestObject);
+                if (objectIndex != -1)
+                {
+                    tutorialSteps[currentTutorialIndex].visitedObjects[objectIndex] = true;
+                }
+            }
+        }
+    }
+
+
+
     private GameObject FindNearestHighlightedObject()
     {
         Debug.Log("GameManagement FindNearestHighlightedObject: Searching for nearest object.");
         GameObject nearestObj = null;
         GameObject tMin = null;
         float minDist = Mathf.Infinity;
-        if(tutorialSteps[currentTutorialIndex] == null)
+        if (tutorialSteps[currentTutorialIndex] == null)
             return null;
         foreach (var obj in tutorialSteps[currentTutorialIndex].objects)
         {
@@ -155,6 +182,7 @@ public class GameManagement : MonoBehaviour
 
     private void DisplayCurrentTutorialStep()
     {
+        InitializeVisitedObjects();
         Debug.Log($"GameManagement DisplayCurrentTutorialStep: Displaying tutorial step {currentTutorialIndex}.");
         if (currentTutorialIndex < tutorialSteps.Count)
         {
@@ -175,7 +203,7 @@ public class GameManagement : MonoBehaviour
         for (int i = 0; i < tutorialSteps.Count; i++)
         {
             bool shouldEnable = i == currentTutorialIndex;
-            if(tutorialSteps[i] != null)
+            if (tutorialSteps[i] != null)
                 foreach (var obj in tutorialSteps[i].objects)
                 {
                     Outline outline = obj.GetComponent<Outline>();
@@ -187,4 +215,25 @@ public class GameManagement : MonoBehaviour
         }
     }
 
+    private void InitializeVisitedObjects()
+    {
+        // Initialize visited objects array for the current step
+        int objectCount = tutorialSteps[currentTutorialIndex].objects.Count;
+        tutorialSteps[currentTutorialIndex].visitedObjects = new bool[objectCount];
+        for (int i = 0; i < objectCount; i++)
+        {
+            tutorialSteps[currentTutorialIndex].visitedObjects[i] = false;
+        }
+    }
+
+    private bool AllObjectsVisited()
+    {
+        // Check if all objects in the current step are visited
+        foreach (bool visited in tutorialSteps[currentTutorialIndex].visitedObjects)
+        {
+            if (!visited)
+                return false;
+        }
+        return true;
+    }
 }
