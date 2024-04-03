@@ -37,11 +37,26 @@ public class GameManagement : MonoBehaviour
     private int currentTutorialIndex = 0; // To keep track of which tutorial item we're on
     private bool readyForNextStep = false;
 
-    private void Start()
+    private IEnumerator Start()
     {
-        Debug.Log("GameManagement Start: Tutorial initialized.");
+        // Assuming FadeController is attached to the same object
+        yield return new WaitForSeconds(3.0f); // Wait for the fade to complete
         tutorialScreen.SetActive(true);
+        PauseGame();
+    }
+
+    private void PauseGame()
+    {
+        Time.timeScale = 0;
         gamePaused = true;
+        // Further pause logic here
+    }
+
+    private void ResumeGame()
+    {
+        Time.timeScale = 1;
+        gamePaused = false;
+        // Further resume logic here
     }
 
     private void Update()
@@ -53,7 +68,7 @@ public class GameManagement : MonoBehaviour
             SceneManager.LoadScene(currentScene.buildIndex);
         }
 
-        if (gamePaused && (Input.GetKeyDown(KeyCode.KeypadEnter) || OVRInput.GetDown(OVRInput.RawButton.A)))
+        if (gamePaused && (Input.GetKeyDown(KeyCode.F1) || OVRInput.GetDown(OVRInput.RawButton.A)))
         {
             if (!readyForNextStep)
             {
@@ -62,7 +77,7 @@ public class GameManagement : MonoBehaviour
             else
             {
                 tutorialScreen.SetActive(false);
-                gamePaused = false;
+                ResumeGame();
                 UpdateOutlines();
             }
         }
@@ -84,7 +99,7 @@ public class GameManagement : MonoBehaviour
                 {
                     tutorialScreen.SetActive(true);
                     arrowScript.DisableArrow();
-                    gamePaused = true;
+                    PauseGame();
                     currentTarget = null;
                     readyForNextStep = false;
                     NextTutorialItem();
@@ -99,6 +114,15 @@ public class GameManagement : MonoBehaviour
             {
                 arrowScript.PointTo(currentTarget.transform.position);  // Continuously update arrow direction
             }
+        }
+        if (!gamePaused && currentTarget == null && AllObjectsVisited())
+        {
+            tutorialScreen.SetActive(true);
+            arrowScript.DisableArrow();
+            PauseGame();
+            currentTarget = null;
+            readyForNextStep = false;
+            NextTutorialItem();
         }
     }
 
@@ -121,7 +145,7 @@ public class GameManagement : MonoBehaviour
         {
             // End of the tutorial
             tutorialScreen.SetActive(false);
-            gamePaused = false;
+            ResumeGame();
         }
 
         UpdateOutlines(); // Update the outlines for all objects
@@ -143,9 +167,22 @@ public class GameManagement : MonoBehaviour
                 {
                     tutorialSteps[currentTutorialIndex].visitedObjects[objectIndex] = true;
                 }
+
+                // After marking the current object as visited, find the next one
+                GameObject nextTarget = FindNearestHighlightedObject(); // This should now find the next closest unvisited object
+                if (nextTarget != null)
+                {
+                    arrowScript.PointTo(nextTarget.transform.position);
+                    currentTarget = nextTarget; // Update the currentTarget to the new object
+                }
+                else
+                {
+                    arrowScript.DisableArrow(); // If no unvisited objects remain, disable the arrow
+                }
             }
         }
     }
+
 
 
 
@@ -153,32 +190,52 @@ public class GameManagement : MonoBehaviour
     {
         Debug.Log("GameManagement FindNearestHighlightedObject: Searching for nearest object.");
         GameObject nearestObj = null;
-        GameObject tMin = null;
         float minDist = Mathf.Infinity;
-        if (tutorialSteps[currentTutorialIndex] == null)
-            return null;
-        foreach (var obj in tutorialSteps[currentTutorialIndex].objects)
-        {
 
+        // Check for currentTutorialIndex bounds to prevent IndexOutOfRangeException
+        if (currentTutorialIndex < 0 || currentTutorialIndex >= tutorialSteps.Count || tutorialSteps[currentTutorialIndex] == null)
+        {
+            Debug.Log("GameManagement FindNearestHighlightedObject: Current tutorial step is out of bounds or null.");
+            return null;
+        }
+
+        // Get the current tutorial step for easier access
+        TutorialStep currentStep = tutorialSteps[currentTutorialIndex];
+
+        // Loop through all objects in the current tutorial step
+        for (int i = 0; i < currentStep.objects.Count; i++)
+        {
+            GameObject obj = currentStep.objects[i];
+
+            // Skip this object if it has already been visited
+            if (currentStep.visitedObjects[i])
+            {
+                continue;
+            }
+
+            // Calculate distance from player to object
             float dist = Vector3.Distance(obj.transform.position, playerController.transform.position);
+
+            // Update nearestObj if this object is closer than the current nearest
             if (dist < minDist)
             {
-                tMin = obj;
+                nearestObj = obj;
                 minDist = dist;
             }
         }
 
         if (nearestObj != null)
         {
-            Debug.Log($"GameManagement FindNearestHighlightedObject: Nearest object is {nearestObj.name}.");
+            Debug.Log($"GameManagement FindNearestHighlightedObject: Nearest unvisited object is {nearestObj.name}.");
         }
         else
         {
-            Debug.Log("GameManagement FindNearestHighlightedObject: No object found.");
+            Debug.Log("GameManagement FindNearestHighlightedObject: No unvisited object found.");
         }
 
-        return tMin;
+        return nearestObj;
     }
+
 
     private void DisplayCurrentTutorialStep()
     {
@@ -194,7 +251,7 @@ public class GameManagement : MonoBehaviour
         {
             Debug.Log("GameManagement DisplayCurrentTutorialStep: Tutorial ended.");
             tutorialScreen.SetActive(false);
-            gamePaused = false;
+            ResumeGame();       
         }
     }
 
@@ -228,12 +285,18 @@ public class GameManagement : MonoBehaviour
 
     private bool AllObjectsVisited()
     {
-        // Check if all objects in the current step are visited
-        foreach (bool visited in tutorialSteps[currentTutorialIndex].visitedObjects)
+        if (currentTutorialIndex < 0 || currentTutorialIndex >= tutorialSteps.Count)
         {
-            if (!visited)
-                return false;
+            Debug.LogError("Invalid tutorial step index.");
+            return false;
         }
-        return true;
+
+        foreach (var visited in tutorialSteps[currentTutorialIndex].visitedObjects)
+        {
+            if (!visited) return false; // If any object is not visited, return false
+        }
+
+        return true; // All objects visited
     }
+
 }
